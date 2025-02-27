@@ -1,0 +1,12 @@
+{
+  "Version": 1,
+  "Hash": "8/fOyX8XAVKWMmwg0vXv0TTzPqntcGgkqVbgYgs9eAY=",
+  "Source": "FilmwebBackend",
+  "BasePath": "_content/FilmwebBackend",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": [],
+  "Endpoints": []
+}
