@@ -23,13 +23,11 @@ public class TMDBApiClient
     {
         try
         {
-            // Ensure the URL is correctly formatted with no leading slash
             var requestUrl = $"search/movie?api_key={_apiKey}&query={Uri.EscapeDataString(query)}&page={page}";
             _logger.LogInformation($"Making request to: {_httpClient.BaseAddress}{requestUrl}");
 
             var response = await _httpClient.GetAsync(requestUrl);
             
-            // Log response details for debugging
             var content = await response.Content.ReadAsStringAsync();
             _logger.LogInformation($"Response status: {response.StatusCode}, Content: {content.Substring(0, Math.Min(content.Length, 500))}");
             
@@ -52,7 +50,6 @@ public class TMDBApiClient
             
             var response = await _httpClient.GetAsync(requestUrl);
             
-            // Log response details for debugging
             var content = await response.Content.ReadAsStringAsync();
             _logger.LogInformation($"Response status: {response.StatusCode}, Content: {content.Substring(0, Math.Min(content.Length, 500))}");
             

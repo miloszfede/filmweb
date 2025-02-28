@@ -1,0 +1,12 @@
+.profile-container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.jumbotron {
+  padding: 20px;
+  background-color: #e9ecef;
+  border-radius: 4px;
+  margin-bottom: 20px;
+}

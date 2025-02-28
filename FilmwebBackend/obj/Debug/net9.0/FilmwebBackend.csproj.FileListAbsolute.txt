@@ -156,3 +156,5 @@
 /Users/miloszfede/Projects/ProjektKoniec/FilmwebBackend/obj/Debug/net9.0/FilmwebBackend.pdb
 /Users/miloszfede/Projects/ProjektKoniec/FilmwebBackend/obj/Debug/net9.0/FilmwebBackend.genruntimeconfig.cache
 /Users/miloszfede/Projects/ProjektKoniec/FilmwebBackend/obj/Debug/net9.0/ref/FilmwebBackend.dll
+/Users/miloszfede/Projects/ProjektKoniec/FilmwebBackend/bin/Debug/net9.0/BCrypt.Net-Next.dll
+/Users/miloszfede/Projects/ProjektKoniec/FilmwebBackend/obj/Debug/net9.0/FilmwebBackend.sourcelink.json
