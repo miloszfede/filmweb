@@ -31,7 +31,20 @@ builder.Services.AddHttpClient<TMDBApiClient>(client =>
 builder.Services.AddScoped<AuthService>();
 
 builder.Services.AddLogging();
-builder.Services.AddCors();
+
+// Updated CORS configuration - adding named policy and allowing specific origin
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowReactApp", policy =>
+    {
+        policy.WithOrigins("http://localhost:5173")
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .SetIsOriginAllowed(_ => true)  // Allow any origin if your policy gets complex
+              .WithExposedHeaders("Content-Disposition", "Content-Length")
+              .SetPreflightMaxAge(TimeSpan.FromSeconds(86400)); // Cache preflight for 24 hours
+    });
+});
 
 var app = builder.Build();
 
@@ -40,6 +53,9 @@ using (var scope = app.Services.CreateScope())
     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     dbContext.Database.EnsureCreated();
 }
+
+// Make sure CORS middleware is used early in the pipeline - BEFORE Swagger
+app.UseCors("AllowReactApp");
 
 if (app.Environment.IsDevelopment())
 {
@@ -50,13 +66,9 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-app.UseCors(builder => builder
-    .AllowAnyOrigin()
-    .AllowAnyMethod()
-    .AllowAnyHeader());
-
 app.UseHttpsRedirection();
 
+// Register endpoint with explicit CORS policy
 app.MapPost("/api/auth/register", async (RegisterRequest request, AuthService authService) =>
 {
     if (string.IsNullOrEmpty(request.Username) || string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Password))
@@ -69,8 +81,10 @@ app.MapPost("/api/auth/register", async (RegisterRequest request, AuthService au
         
     return Results.Ok(new AuthResponse(user.Id, user.Username, user.Email));
 })
-.WithName("RegisterUser");
+.WithName("RegisterUser")
+.RequireCors("AllowReactApp");  // Apply CORS policy to this endpoint
 
+// Login endpoint with explicit CORS policy
 app.MapPost("/api/auth/login", async (LoginRequest request, AuthService authService) =>
 {
     var user = await authService.LoginAsync(request.Username, request.Password);
@@ -80,7 +94,8 @@ app.MapPost("/api/auth/login", async (LoginRequest request, AuthService authServ
         
     return Results.Ok(new AuthResponse(user.Id, user.Username, user.Email));
 })
-.WithName("LoginUser");
+.WithName("LoginUser")
+.RequireCors("AllowReactApp");  // Apply CORS policy to this endpoint
 
 var summaries = new[]
 {
@@ -99,14 +114,16 @@ app.MapGet("/weatherforecast", () =>
         .ToArray();
     return forecast;
 })
-.WithName("GetWeatherForecast");
+.WithName("GetWeatherForecast")
+.RequireCors("AllowReactApp");
 
 app.MapGet("/api/movies/search", async (string query, int? page, TMDBApiClient client) =>
 {
     var result = await client.SearchMoviesAsync(query, page ?? 1);
     return result;
 })
-.WithName("SearchMovies");
+.WithName("SearchMovies")
+.RequireCors("AllowReactApp");
 
 app.MapGet("/api/movies/{id}", async (int id, TMDBApiClient client) =>
 {
@@ -120,7 +137,8 @@ app.MapGet("/api/movies/{id}", async (int id, TMDBApiClient client) =>
         return Results.NotFound();
     }
 })
-.WithName("GetMovieDetails");
+.WithName("GetMovieDetails")
+.RequireCors("AllowReactApp");
 
 app.Run();
 
