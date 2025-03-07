@@ -1,60 +1,70 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5112/api/auth/';
+const API_URL = "http://localhost:5112/api/auth/"; // Use your correct port
 
-export interface User {
-  userId: number;
+interface AuthResponse {
+  id: number;
   username: string;
   email: string;
+  token: string;
 }
 
-export interface RegisterRequest {
-  username: string;
-  email: string;
-  password: string;
-}
+const register = async (username: string, email: string, password: string) => {
+  return axios.post(API_URL + "register", {
+    username,
+    email,
+    password
+  });
+};
 
-export interface LoginRequest {
-  username: string;
-  password: string;
-}
+const login = async (username: string, password: string) => {
+  const response = await axios.post<AuthResponse>(API_URL + "login", {
+    username,
+    password
+  });
+  
+  if (response.data && response.data.token) {
+    localStorage.setItem("user", JSON.stringify(response.data));
+  }
+  
+  return response.data;
+};
 
-export class AuthService {
-  async login(username: string, password: string): Promise<User> {
-    const response = await axios.post(API_URL + 'login', {
-      username,
-      password,
-    });
-    
-    if (response.data) {
-      localStorage.setItem('user', JSON.stringify(response.data));
+const logout = () => {
+  localStorage.removeItem("user");
+};
+
+const getCurrentUser = () => {
+  const userStr = localStorage.getItem("user");
+  if (userStr) return JSON.parse(userStr);
+  return null;
+};
+
+// Add this function to set JWT token in axios headers
+const setupAxiosInterceptors = () => {
+  axios.interceptors.request.use(
+    (config) => {
+      const user = getCurrentUser();
+      if (user && user.token) {
+        config.headers['Authorization'] = 'Bearer ' + user.token;
+      }
+      return config;
+    },
+    (error) => {
+      return Promise.reject(error);
     }
-    
-    return response.data;
-  }
+  );
+};
 
-  logout(): void {
-    localStorage.removeItem('user');
-  }
+// Call this function when your app starts
+setupAxiosInterceptors();
 
-  async register(username: string, email: string, password: string): Promise<User> {
-    const response = await axios.post(API_URL + 'register', {
-      username,
-      email,
-      password,
-    });
-    
-    return response.data;
-  }
+const AuthService = {
+  register,
+  login,
+  logout,
+  getCurrentUser,
+  setupAxiosInterceptors
+};
 
-  getCurrentUser(): User | null {
-    const userStr = localStorage.getItem('user');
-    if (userStr) {
-      return JSON.parse(userStr);
-    }
-    
-    return null;
-  }
-}
-
-export default new AuthService();
+export default AuthService;

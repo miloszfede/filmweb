@@ -158,3 +158,11 @@
 /Users/miloszfede/Projects/ProjektKoniec/FilmwebBackend/obj/Debug/net9.0/ref/FilmwebBackend.dll
 /Users/miloszfede/Projects/ProjektKoniec/FilmwebBackend/bin/Debug/net9.0/BCrypt.Net-Next.dll
 /Users/miloszfede/Projects/ProjektKoniec/FilmwebBackend/obj/Debug/net9.0/FilmwebBackend.sourcelink.json
+/Users/miloszfede/Projects/ProjektKoniec/FilmwebBackend/bin/Debug/net9.0/Microsoft.AspNetCore.Authentication.JwtBearer.dll
+/Users/miloszfede/Projects/ProjektKoniec/FilmwebBackend/bin/Debug/net9.0/Microsoft.IdentityModel.Abstractions.dll
+/Users/miloszfede/Projects/ProjektKoniec/FilmwebBackend/bin/Debug/net9.0/Microsoft.IdentityModel.JsonWebTokens.dll
+/Users/miloszfede/Projects/ProjektKoniec/FilmwebBackend/bin/Debug/net9.0/Microsoft.IdentityModel.Logging.dll
+/Users/miloszfede/Projects/ProjektKoniec/FilmwebBackend/bin/Debug/net9.0/Microsoft.IdentityModel.Protocols.dll
+/Users/miloszfede/Projects/ProjektKoniec/FilmwebBackend/bin/Debug/net9.0/Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
+/Users/miloszfede/Projects/ProjektKoniec/FilmwebBackend/bin/Debug/net9.0/Microsoft.IdentityModel.Tokens.dll
+/Users/miloszfede/Projects/ProjektKoniec/FilmwebBackend/bin/Debug/net9.0/System.IdentityModel.Tokens.Jwt.dll

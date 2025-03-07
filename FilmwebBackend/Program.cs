@@ -3,8 +3,36 @@ using FilmwebBackend.Models;
 using FilmwebBackend.Data;
 using Microsoft.OpenApi.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
+
+var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>() ?? new JwtSettings();
+builder.Services.AddSingleton(jwtSettings);
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = jwtSettings.Issuer,
+        ValidAudience = jwtSettings.Audience,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Key))
+    };
+});
+
+builder.Services.AddAuthorization();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -32,7 +60,6 @@ builder.Services.AddScoped<AuthService>();
 
 builder.Services.AddLogging();
 
-// Updated CORS configuration - adding named policy and allowing specific origin
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactApp", policy =>
@@ -40,9 +67,9 @@ builder.Services.AddCors(options =>
         policy.WithOrigins("http://localhost:5173")
               .AllowAnyHeader()
               .AllowAnyMethod()
-              .SetIsOriginAllowed(_ => true)  // Allow any origin if your policy gets complex
+              .SetIsOriginAllowed(_ => true)  
               .WithExposedHeaders("Content-Disposition", "Content-Length")
-              .SetPreflightMaxAge(TimeSpan.FromSeconds(86400)); // Cache preflight for 24 hours
+              .SetPreflightMaxAge(TimeSpan.FromSeconds(86400)); 
     });
 });
 
@@ -54,7 +81,6 @@ using (var scope = app.Services.CreateScope())
     dbContext.Database.EnsureCreated();
 }
 
-// Make sure CORS middleware is used early in the pipeline - BEFORE Swagger
 app.UseCors("AllowReactApp");
 
 if (app.Environment.IsDevelopment())
@@ -66,56 +92,66 @@ if (app.Environment.IsDevelopment())
     });
 }
 
+app.UseAuthentication();
+app.UseAuthorization();
+
 app.UseHttpsRedirection();
 
-// Register endpoint with explicit CORS policy
 app.MapPost("/api/auth/register", async (RegisterRequest request, AuthService authService) =>
 {
     if (string.IsNullOrEmpty(request.Username) || string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Password))
         return Results.BadRequest("Username, email and password are required");
         
-    var user = await authService.RegisterUserAsync(request.Username, request.Email, request.Password);
+    var result = await authService.RegisterUserAsync(request.Username, request.Email, request.Password);
     
-    if (user == null)
+    if (result.User == null)
         return Results.BadRequest("Username or email already exists");
         
-    return Results.Ok(new AuthResponse(user.Id, user.Username, user.Email));
+    if (string.IsNullOrEmpty(result.Token))
+        return Results.BadRequest("Token generation failed");
+
+    return Results.Ok(new AuthResponse(
+        result.User.Id,
+        result.User.Username,
+        result.User.Email,
+        result.Token
+    ));
 })
 .WithName("RegisterUser")
-.RequireCors("AllowReactApp");  // Apply CORS policy to this endpoint
+.RequireCors("AllowReactApp");  
 
-// Login endpoint with explicit CORS policy
 app.MapPost("/api/auth/login", async (LoginRequest request, AuthService authService) =>
 {
-    var user = await authService.LoginAsync(request.Username, request.Password);
+    var result = await authService.LoginAsync(request.Username, request.Password);
     
-    if (user == null)
+    if (result.User == null)
         return Results.BadRequest("Invalid username or password");
+
+    if (string.IsNullOrEmpty(result.Token))
+        return Results.BadRequest("Token generation failed");
         
-    return Results.Ok(new AuthResponse(user.Id, user.Username, user.Email));
+    return Results.Ok(new AuthResponse(
+        result.User.Id,
+        result.User.Username,
+        result.User.Email,
+        result.Token
+    ));
 })
 .WithName("LoginUser")
-.RequireCors("AllowReactApp");  // Apply CORS policy to this endpoint
-
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
-
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast = Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast")
 .RequireCors("AllowReactApp");
+
+app.MapGet("/api/user/profile", (ClaimsPrincipal user) =>
+{
+    var userId = user.FindFirstValue(ClaimTypes.NameIdentifier);
+    var username = user.FindFirstValue(ClaimTypes.Name);
+    var email = user.FindFirstValue(ClaimTypes.Email);
+    
+    return Results.Ok(new { userId, username, email });
+})
+.WithName("GetUserProfile")
+.RequireAuthorization() // This makes the endpoint protected
+.RequireCors("AllowReactApp");
+
 
 app.MapGet("/api/movies/search", async (string query, int? page, TMDBApiClient client) =>
 {
@@ -142,7 +178,4 @@ app.MapGet("/api/movies/{id}", async (int id, TMDBApiClient client) =>
 
 app.Run();
 
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
+

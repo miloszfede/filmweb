@@ -3,3 +3,5 @@ bin
 FilmwebBackend.sln
 FilmwebBackend.http
 filmwebBackend.csproj
+FilmwebBackend/bin
+FilmwebBackend/obj
