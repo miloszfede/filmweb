@@ -149,7 +149,7 @@ app.MapGet("/api/user/profile", (ClaimsPrincipal user) =>
     return Results.Ok(new { userId, username, email });
 })
 .WithName("GetUserProfile")
-.RequireAuthorization() // This makes the endpoint protected
+.RequireAuthorization() 
 .RequireCors("AllowReactApp");
 
 

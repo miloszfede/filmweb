@@ -40,7 +40,6 @@ const getCurrentUser = () => {
   return null;
 };
 
-// Add this function to set JWT token in axios headers
 const setupAxiosInterceptors = () => {
   axios.interceptors.request.use(
     (config) => {
@@ -56,7 +55,6 @@ const setupAxiosInterceptors = () => {
   );
 };
 
-// Call this function when your app starts
 setupAxiosInterceptors();
 
 const AuthService = {
